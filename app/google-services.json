@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "74781855260",
+    "project_id": "besiktasapp-349af",
+    "storage_bucket": "besiktasapp-349af.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:74781855260:android:e158051f2b84f31fbe99d9",
+        "android_client_info": {
+          "package_name": "com.example.besiktasapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_iCd0-KEvPrZwtGO5olSVoCauKWfbm5c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
