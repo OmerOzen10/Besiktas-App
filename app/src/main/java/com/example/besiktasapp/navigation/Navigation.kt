@@ -1,12 +1,9 @@
 package com.example.besiktasapp.navigation
 
-import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.ViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.besiktasapp.MainActivity
 import com.example.besiktasapp.screens.MainScreen
 import com.example.besiktasapp.screens.NewsScreen
 import com.example.besiktasapp.screens.ProfileScreen
@@ -16,16 +13,16 @@ import com.example.besiktasapp.viewmodels.MainViewModel
 
 
 sealed class Screen(val route: String) {
-    object Home : Screen("home")
-    object News : Screen("news")
-    object Profile : Screen("profile")
-    object Settings : Screen("settings")
+    data object Home : Screen("home")
+    data object News : Screen("news")
+    data object Profile : Screen("profile")
+    data object Settings : Screen("settings")
 }
 
 @Composable
 fun SetupNavGraph(
     navController: NavHostController,
-    viewModel: MainViewModel // ViewModel'ı buradan geçin
+    viewModel: MainViewModel
 ) {
     NavHost(
         navController = navController,
