@@ -1,6 +1,7 @@
 package com.example.besiktasapp.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -28,7 +29,7 @@ fun SetupNavGraph(
         navController = navController,
         startDestination = Screen.Home.route
     ) {
-        composable(Screen.Home.route) { MainScreen(viewModel = viewModel) }
+        composable(Screen.Home.route) { MainScreen(viewModel = viewModel, LocalContext.current) }
         composable(Screen.News.route) { NewsScreen() }
         composable(Screen.Profile.route) { ProfileScreen() }
         composable(Screen.Settings.route) { SettingsScreen() }

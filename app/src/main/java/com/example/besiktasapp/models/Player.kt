@@ -1,6 +1,7 @@
 package com.example.besiktasapp.models
 
 data class Player(
+    var id: Int?=null,
     var image: String?= null,
     var name: String?= null,
     var position: String?= null,

@@ -1,5 +1,7 @@
 package com.example.besiktasapp.screens
 
+import android.content.Context
+import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -8,6 +10,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -15,9 +18,12 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,6 +43,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -46,13 +53,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
+import com.example.besiktasapp.FavoritesManager
 import com.example.besiktasapp.models.Player
 import com.example.besiktasapp.sealed.DataState
 import com.example.besiktasapp.R
 import com.example.besiktasapp.viewmodels.MainViewModel
+import kotlinx.coroutines.launch
 
 @Composable
-fun MainScreen(viewModel: MainViewModel) {
+fun MainScreen(viewModel: MainViewModel, context: Context) {
+    val favoritesManager = remember {FavoritesManager(context)}
     val responseState = viewModel.response.value
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -70,7 +80,7 @@ fun MainScreen(viewModel: MainViewModel) {
         ) {
             if (responseState is DataState.Success) {
                 items(responseState.data) { player ->
-                    CardItem(player)
+                    CardItem(player, favoritesManager = favoritesManager)
                 }
             }
         }
@@ -108,11 +118,14 @@ fun ErrorMessage(message: String) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CardItem(player: Player) {
+fun CardItem(player: Player , favoritesManager: FavoritesManager) {
+    val scope = rememberCoroutineScope()
+    val favorites by favoritesManager.favoritesFlow.collectAsState(initial = emptySet())
+    val isFavorite = favorites.contains(player.id.toString())
     val screenHeight = (LocalConfiguration.current.screenHeightDp).dp
     val imageHeight = screenHeight - 80.dp
     val myCustomFont = FontFamily(Font(R.font.customfont))
-    var isClicked by remember { mutableStateOf(false) }
+    var isClicked by rememberSaveable { mutableStateOf(false) }
     val blurAmount by animateDpAsState(
         targetValue = if (isClicked) 16.dp else 0.dp,
         animationSpec = tween(durationMillis = 500),
@@ -122,11 +135,6 @@ fun CardItem(player: Player) {
         targetValue = if (isClicked) 0f else 1f,
         animationSpec = tween(durationMillis = 500),
         label = ""
-    )
-
-    val cardHeight by animateDpAsState(
-        targetValue = if (isClicked) 600.dp else 0.dp, // Increase height when clicked
-        animationSpec = tween(durationMillis = 500), label = ""
     )
 
     Card(
@@ -141,7 +149,7 @@ fun CardItem(player: Player) {
         }
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            // Image
+            // Arka plan resmi
             Image(
                 painter = rememberImagePainter(player.image),
                 contentDescription = null,
@@ -151,7 +159,7 @@ fun CardItem(player: Player) {
                     .blur(blurAmount)
             )
 
-            // Gradient Box overlay for text visibility
+            // Gradient efekt
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -163,7 +171,7 @@ fun CardItem(player: Player) {
                     )
             )
 
-            // Player name at the bottom of the image
+            // Oyuncu ismi
             Text(
                 text = player.name ?: "Unknown Player",
                 fontSize = 16.sp,
@@ -176,14 +184,38 @@ fun CardItem(player: Player) {
                 color = Color.White
             )
 
-            // Show additional card with text when clicked
+            // Favori ikonunu ekle (en üste)
+            Box(
+                modifier = Modifier
+                    .size(40.dp) // İkon boyutu
+                    .align(Alignment.TopEnd) // Kartın sağ üst köşesine hizala
+                    .padding(8.dp)
+                    .clickable {
+                        scope.launch {
+                            if (isFavorite) {
+                                favoritesManager.removeFavorite(player.id.toString())
+                            } else {
+                                favoritesManager.addFavorite(player.id.toString())
+                            }
+                        }
+                    }
+            ) {
+
+                val icon = if (isFavorite) R.drawable.fav else R.drawable.favempty
+                Image(
+                    painter = painterResource(id = icon),
+                    contentDescription = "Fav icon",
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
+            // Tıklanınca detaylar
             if (isClicked) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp)
                 ) {
-
                     Column(
                         modifier = Modifier.fillMaxSize()
                     ) {
@@ -210,7 +242,8 @@ fun CardItem(player: Player) {
                         Divider(
                             color = Color.LightGray,
                             thickness = 1.dp,
-                            modifier = Modifier.padding(vertical = 8.dp)
+                            modifier = Modifier
+                                .padding(vertical = 8.dp)
                                 .padding(bottom = 10.dp)
                         )
                         Text(
@@ -225,7 +258,8 @@ fun CardItem(player: Player) {
                         Divider(
                             color = Color.LightGray,
                             thickness = 1.dp,
-                            modifier = Modifier.padding(vertical = 8.dp)
+                            modifier = Modifier
+                                .padding(vertical = 8.dp)
                                 .padding(bottom = 10.dp)
                         )
                         Text(
@@ -240,7 +274,8 @@ fun CardItem(player: Player) {
                         Divider(
                             color = Color.LightGray,
                             thickness = 1.dp,
-                            modifier = Modifier.padding(vertical = 8.dp)
+                            modifier = Modifier
+                                .padding(vertical = 8.dp)
                                 .padding(bottom = 10.dp)
                         )
                         Text(
@@ -255,7 +290,8 @@ fun CardItem(player: Player) {
                         Divider(
                             color = Color.LightGray,
                             thickness = 1.dp,
-                            modifier = Modifier.padding(vertical = 8.dp)
+                            modifier = Modifier
+                                .padding(vertical = 8.dp)
                                 .padding(bottom = 10.dp)
                         )
                         Text(
@@ -270,7 +306,8 @@ fun CardItem(player: Player) {
                         Divider(
                             color = Color.LightGray,
                             thickness = 1.dp,
-                            modifier = Modifier.padding(vertical = 8.dp)
+                            modifier = Modifier
+                                .padding(vertical = 8.dp)
                                 .padding(bottom = 10.dp)
                         )
                         Text(
@@ -285,10 +322,12 @@ fun CardItem(player: Player) {
                     }
                 }
             }
-
         }
     }
 }
+
+
+
 
 
 @Composable
